@@ -14,4 +14,12 @@ export class RegistrationService {
   submitRegistration(formData: any): Observable<any> {
     return this.http.post(this.apiUrl, formData);
   }
+
+  getRegisteredAgents(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/agents`); // Assuming endpoint for getting agents
+  }
+
+  updateAgentStatus(agentId: string, isActive: boolean): Observable<any> {
+    return this.http.put(`${this.apiUrl}/agents/${agentId}`, { IS_ACTIVE: isActive });
+  }
 }

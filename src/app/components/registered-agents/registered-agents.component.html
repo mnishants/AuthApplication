@@ -1,0 +1,59 @@
+<div class="agents-list">
+  <h2>Registered Agents</h2>
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+  <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+  <div *ngIf="agents.length > 0; else noAgents" class="table-container">
+    <table class="agents-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Registration Ref No</th>
+          <th>Company Name</th>
+          <th>Company Address</th>
+          <th>Contact Person Name</th>
+          <th>Designation</th>
+          <th>Mobile Number</th>
+          <th>Status</th>
+          <th>Created On</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let agent of agents">
+          <td>{{ agent.ID }}</td>
+          <td>{{ agent.REGISTRATION_REF_NO }}</td>
+          <td>{{ agent.COMPANY_NAME }}</td>
+          <td>{{ agent.COMPANY_ADDRESS }}</td>
+          <td>{{ agent.CONTACT_PERSON_NAME }}</td>
+          <td>{{ agent.DESIGNATION }}</td>
+          <td>{{ agent.MOBILE_NUMBER }}</td>
+          <td>
+            <span [ngClass]="agent.IS_ACTIVE ? 'status-active' : 'status-inactive'">
+              {{ agent.IS_ACTIVE ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>{{ agent.CREATED_ON | date: 'short' }}</td>
+          <td>
+            <button 
+              *ngIf="!agent.IS_ACTIVE" 
+              (click)="toggleAgentStatus(agent)"
+              [disabled]="updatingAgentId === agent.ID"
+              class="btn btn-activate">
+              {{ updatingAgentId === agent.ID ? 'Activating...' : 'Activate' }}
+            </button>
+            <button 
+              *ngIf="agent.IS_ACTIVE" 
+              (click)="toggleAgentStatus(agent)"
+              [disabled]="updatingAgentId === agent.ID"
+              class="btn btn-deactivate">
+              {{ updatingAgentId === agent.ID ? 'Deactivating...' : 'Deactivate' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ng-template #noAgents>
+    <p class="no-data">No registered agents found.</p>
+  </ng-template>
+</div>
