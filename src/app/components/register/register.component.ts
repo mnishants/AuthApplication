@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RegistrationService } from '../../services/registration.service';
+import { CityData, CountryData, RegisterAgentPayload, RegistrationService } from '../../services/registration.service';
 
 @Component({
   selector: 'app-register',
@@ -13,38 +13,35 @@ import { RegistrationService } from '../../services/registration.service';
 export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
 
-  // Sample data for dropdowns - replace with actual API calls
-  countries = [
-    { id: '1', name: 'United States' },
-    { id: '2', name: 'United Kingdom' },
-    { id: '3', name: 'Canada' },
-    { id: '4', name: 'Australia' },
-    { id: '5', name: 'Germany' }
-  ];
-
-  cities = [
-    { id: '1', name: 'New York', countryId: '1' },
-    { id: '2', name: 'London', countryId: '2' },
-    { id: '3', name: 'Toronto', countryId: '3' },
-    { id: '4', name: 'Sydney', countryId: '4' },
-    { id: '5', name: 'Berlin', countryId: '5' },
-    { id: '6', name: 'Los Angeles', countryId: '1' },
-    { id: '7', name: 'Manchester', countryId: '2' },
-    { id: '8', name: 'Vancouver', countryId: '3' }
-  ];
-
-  filteredCities: any[] = [];
+  countries: CountryData[] = [];
+  filteredCities: CityData[] = [];
+  submitSuccessMessage: string = '';
+  submitErrorMessage: string = '';
+  isSubmitting: boolean = false;
 
   constructor(private fb: FormBuilder, private registrationService: RegistrationService) {}
 
   ngOnInit(): void {
     this.initializeForm();
+    this.loadCountries();
+  }
+
+  loadCountries(): void {
+    this.registrationService.getCountries().subscribe({
+      next: (data) => {
+        this.countries = data;
+      },
+      error: (error) => {
+        console.error('Failed to load countries:', error);
+        this.countries = [];
+      }
+    });
   }
 
   initializeForm(): void {
     this.registerForm = this.fb.group({
-      countryId: ['', [Validators.required]],
-      cityId: ['', [Validators.required]],
+      countryId: [null, [Validators.required]],
+      cityId: [null, [Validators.required]],
       registrationRefNo: ['', [Validators.required]],
       companyName: ['', [Validators.required]],
       companyAddress: ['', [Validators.required]],
@@ -57,6 +54,8 @@ export class RegisterComponent implements OnInit {
       designation: ['', [Validators.required]],
       mobileNumber: ['', [Validators.required, Validators.pattern(/^[0-9\-\+\(\)\s]{10,}$/)]],
       allowedSubusers: ['', [Validators.required, Validators.min(0)]],
+      adminUserName: ['', [Validators.required]],
+      subUserNames: [''],
       registrationStatus: ['PENDING', [Validators.required]],
       isActive: [true, [Validators.required]]
     });
@@ -67,42 +66,94 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  onCountryChange(countryId: string): void {
-    if (countryId) {
-      this.filteredCities = this.cities.filter(city => city.countryId === countryId);
-      // Reset city selection when country changes
-      this.registerForm.patchValue({ cityId: '' });
-    } else {
+  onCountryChange(countryId: number | null): void {
+    this.registerForm.patchValue({ cityId: null });
+
+    if (!countryId) {
       this.filteredCities = [];
+      return;
     }
+
+    this.registrationService.getCitiesByCountry(countryId).subscribe({
+      next: (cities) => {
+        this.filteredCities = cities;
+      },
+      error: (error) => {
+        console.error('Failed to load cities:', error);
+        this.filteredCities = [];
+      }
+    });
   }
 
   onSubmit(): void {
+    this.submitSuccessMessage = '';
+    this.submitErrorMessage = '';
+
     if (this.registerForm.valid) {
-      const formData = this.registerForm.value;
-      console.log('Form Data JSON:', JSON.stringify(formData, null, 2));
+      this.isSubmitting = true;
+      const formValue = this.registerForm.value;
+      const payload: RegisterAgentPayload = {
+        agenT_ID: 0,
+        countryId: Number(formValue.countryId),
+        cityId: Number(formValue.cityId),
+        companyName: String(formValue.companyName || ''),
+        companyAddress: String(formValue.companyAddress || ''),
+        landlineNumber: String(formValue.landlineNumber || ''),
+        website: String(formValue.website || ''),
+        faxNumber: String(formValue.fax || ''),
+        companyEmail: String(formValue.companyEmail || ''),
+        licenseNumber: String(formValue.licenseNumber || ''),
+        contactPersonName: String(formValue.contactPersonName || ''),
+        designation: String(formValue.designation || ''),
+        mobileNumber: String(formValue.mobileNumber || ''),
+        numberOfProposedUsers: Number(formValue.allowedSubusers || 0),
+        adminUserName: String(formValue.adminUserName || ''),
+        subUserNames: this.parseSubUserNames(formValue.subUserNames),
+      };
+
+      console.log('Registration Payload JSON:', JSON.stringify(payload, null, 2));
       // Call API service to submit the form
-      this.registrationService.submitRegistration(formData).subscribe({
+      this.registrationService.submitRegistration(payload).subscribe({
         next: (response) => {
           console.log('Registration successful:', response);
-          // Handle success, e.g., show message, navigate, etc.
+          this.submitSuccessMessage = response?.message || 'Registration successful.';
+          this.isSubmitting = false;
+          this.resetForm();
         },
         error: (error) => {
           console.error('Registration failed:', error);
-          // Handle error, e.g., show error message
+          this.submitErrorMessage = error?.error?.message || 'Registration failed. Please try again.';
+          this.isSubmitting = false;
         }
       });
     } else {
-      console.log('Form is invalid');
+      this.registerForm.markAllAsTouched();
+      this.submitErrorMessage = 'Please fill all required fields correctly.';
     }
   }
 
   resetForm(): void {
     this.registerForm.reset({
+      countryId: null,
+      cityId: null,
+      adminUserName: '',
+      subUserNames: '',
       registrationStatus: 'PENDING',
       isActive: true
     });
     this.filteredCities = [];
+    this.submitErrorMessage = '';
+  }
+
+  private parseSubUserNames(subUserNames: string | null | undefined): string[] {
+    if (!subUserNames) {
+      return [];
+    }
+
+    return subUserNames
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
   }
 
   get countryId() {
@@ -159,6 +210,14 @@ export class RegisterComponent implements OnInit {
 
   get allowedSubusers() {
     return this.registerForm.get('allowedSubusers');
+  }
+
+  get adminUserName() {
+    return this.registerForm.get('adminUserName');
+  }
+
+  get subUserNames() {
+    return this.registerForm.get('subUserNames');
   }
 
   get registrationStatus() {

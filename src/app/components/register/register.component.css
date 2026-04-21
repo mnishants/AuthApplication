@@ -24,6 +24,25 @@
   font-weight: 600;
 }
 
+.submit-message {
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.submit-success {
+  background-color: #e8f8ef;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.submit-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
 form {
   display: flex;
   flex-direction: column;

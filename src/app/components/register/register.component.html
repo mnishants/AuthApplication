@@ -2,6 +2,13 @@
   <div class="register-card">
     <h2>Company Registration Form</h2>
 
+    <div class="submit-message submit-success" *ngIf="submitSuccessMessage">
+      {{ submitSuccessMessage }}
+    </div>
+    <div class="submit-message submit-error" *ngIf="submitErrorMessage">
+      {{ submitErrorMessage }}
+    </div>
+
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
       <div class="form-row">
         <div class="form-group">
@@ -12,9 +19,9 @@
             formControlName="countryId"
             [class.is-invalid]="countryId?.invalid && countryId?.touched"
           >
-            <option value="">Select Country</option>
-            <option *ngFor="let country of countries" [value]="country.id">
-              {{ country.name }}
+            <option [ngValue]="null">Select Country</option>
+            <option *ngFor="let country of countries" [ngValue]="country.countryId">
+              {{ country.countryName }}
             </option>
           </select>
           <div class="error-message" *ngIf="countryId?.invalid && countryId?.touched">
@@ -31,9 +38,9 @@
             [class.is-invalid]="cityId?.invalid && cityId?.touched"
             [disabled]="!countryId?.value"
           >
-            <option value="">Select City</option>
-            <option *ngFor="let city of filteredCities" [value]="city.id">
-              {{ city.name }}
+            <option [ngValue]="null">Select City</option>
+            <option *ngFor="let city of filteredCities" [ngValue]="city.cityId">
+              {{ city.cityName }}
             </option>
           </select>
           <div class="error-message" *ngIf="cityId?.invalid && cityId?.touched">
@@ -238,6 +245,34 @@
         </div>
 
         <div class="form-group">
+          <label for="adminUserName">Admin Username *</label>
+          <input
+            type="text"
+            id="adminUserName"
+            class="form-control"
+            formControlName="adminUserName"
+            placeholder="Enter Admin Username"
+            [class.is-invalid]="adminUserName?.invalid && adminUserName?.touched"
+          />
+          <div class="error-message" *ngIf="adminUserName?.invalid && adminUserName?.touched">
+            Admin Username is required
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="subUserNames">Sub User Names</label>
+          <input
+            type="text"
+            id="subUserNames"
+            class="form-control"
+            formControlName="subUserNames"
+            placeholder="Enter comma-separated names (e.g. user1,user2)"
+          />
+        </div>
+
+        <div class="form-group">
           <label for="registrationStatus">Registration Status *</label>
           <select
             id="registrationStatus"
@@ -270,8 +305,8 @@
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid">
-          Register
+        <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Registering...' : 'Register' }}
         </button>
         <button type="button" class="btn btn-secondary" (click)="resetForm()">
           Reset

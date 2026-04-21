@@ -1,52 +1,52 @@
 <div class="agents-list">
   <h2>Registered Agents</h2>
+  <div class="loading" *ngIf="!isLoading && !errorMessage">Loaded records: {{ agents.length }}</div>
   <div *ngIf="isLoading" class="loading">Loading...</div>
   <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
   <div *ngIf="agents.length > 0; else noAgents" class="table-container">
     <table class="agents-table">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Agent ID</th>
           <th>Registration Ref No</th>
           <th>Company Name</th>
           <th>Company Address</th>
-          <th>Contact Person Name</th>
+          <th>Company Email</th>
+          <th>Contact Person</th>
           <th>Designation</th>
           <th>Mobile Number</th>
+          <th>Landline</th>
+          <th>License No</th>
           <th>Status</th>
           <th>Created On</th>
+          <th>Updated On</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let agent of agents">
-          <td>{{ agent.ID }}</td>
-          <td>{{ agent.REGISTRATION_REF_NO }}</td>
-          <td>{{ agent.COMPANY_NAME }}</td>
-          <td>{{ agent.COMPANY_ADDRESS }}</td>
-          <td>{{ agent.CONTACT_PERSON_NAME }}</td>
-          <td>{{ agent.DESIGNATION }}</td>
-          <td>{{ agent.MOBILE_NUMBER }}</td>
+          <td>{{ agent.agent_ID }}</td>
+          <td>{{ agent.registrationRefNo }}</td>
+          <td>{{ agent.companyName }}</td>
+          <td>{{ agent.companyAddress }}</td>
+          <td>{{ agent.companyEmail }}</td>
+          <td>{{ agent.contactPersonName }}</td>
+          <td>{{ agent.designation }}</td>
+          <td>{{ agent.mobileNumber }}</td>
+          <td>{{ agent.landlineNumber }}</td>
+          <td>{{ agent.licenseNumber }}</td>
           <td>
-            <span [ngClass]="agent.IS_ACTIVE ? 'status-active' : 'status-inactive'">
-              {{ agent.IS_ACTIVE ? 'Active' : 'Inactive' }}
+            <span [ngClass]="agent.isActive ? 'status-active' : 'status-inactive'">
+              {{ agent.isActive ? 'Active' : 'Inactive' }}
             </span>
           </td>
-          <td>{{ agent.CREATED_ON | date: 'short' }}</td>
+          <td>{{ agent.createdOn | date: 'short' }}</td>
+          <td>{{ agent.updatedOn | date: 'short' }}</td>
           <td>
-            <button 
-              *ngIf="!agent.IS_ACTIVE" 
-              (click)="toggleAgentStatus(agent)"
-              [disabled]="updatingAgentId === agent.ID"
-              class="btn btn-activate">
-              {{ updatingAgentId === agent.ID ? 'Activating...' : 'Activate' }}
-            </button>
-            <button 
-              *ngIf="agent.IS_ACTIVE" 
-              (click)="toggleAgentStatus(agent)"
-              [disabled]="updatingAgentId === agent.ID"
-              class="btn btn-deactivate">
-              {{ updatingAgentId === agent.ID ? 'Deactivating...' : 'Deactivate' }}
+            <button
+              (click)="setAgentStatus(agent, !agent.isActive)"
+              [ngClass]="agent.isActive ? 'btn btn-deactivate' : 'btn btn-activate'">
+              {{ updatingAgentId === agent.agent_ID ? (agent.isActive ? 'Deactivating...' : 'Activating...') : (agent.isActive ? 'Deactivate' : 'Activate') }}
             </button>
           </td>
         </tr>
